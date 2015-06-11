@@ -8,7 +8,13 @@ import (
 	"os/exec"
 )
 
-// Command returns a Cmd to execpute the named program with the given arguments.
+// LookPath searches for an executable binary named file in the directories
+// named by the PATH environment variable. If file contains a slash, it is
+// tried directly and the PATH is not consulted. The result may be an
+// absolute path or a path relative to the current directory.
+func LookPath(file string) (string, error) { return exec.LookPath(file) }
+
+// Command returns a Cmd to execute the named program with the given arguments.
 func Command(name string, args ...string) *Cmd {
 	return &Cmd{
 		Cmd:        exec.Command(name, args...),
@@ -57,6 +63,17 @@ func (c *Cmd) Start(opts ...func(*exec.Cmd) error) error {
 	return c.Cmd.Start()
 }
 
+// Stdin specifies the process's standard input.
+func Stdin(r io.Reader) func(*exec.Cmd) error {
+	return func(c *exec.Cmd) error {
+		if c.Stdin != nil {
+			return errors.New("exec: Stdin already set")
+		}
+		c.Stdin = r
+		return nil
+	}
+}
+
 // Stdout specifies the process's standard output.
 func Stdout(w io.Writer) func(*exec.Cmd) error {
 	return func(c *exec.Cmd) error {
@@ -68,10 +85,22 @@ func Stdout(w io.Writer) func(*exec.Cmd) error {
 	}
 }
 
+// Stderr specifies the process's standard error..
+func Stderr(w io.Writer) func(*exec.Cmd) error {
+	return func(c *exec.Cmd) error {
+		if c.Stderr != nil {
+			return errors.New("exec: Stderr already set")
+		}
+		c.Stderr = w
+		return nil
+	}
+}
+
 // Output runs the command and returns its standard output.
 func (c *Cmd) Output(opts ...func(*exec.Cmd) error) ([]byte, error) {
 	var b bytes.Buffer
-	err := c.Run(append(opts, Stdout(&b))...)
+	opts = append([]func(*exec.Cmd) error{Stdout(&b)}, opts...)
+	err := c.Run(opts...)
 	return b.Bytes(), err
 }
 
