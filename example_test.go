@@ -3,9 +3,10 @@
 package exec_test
 
 import (
-	"exec"
 	"log"
 	"os"
+
+	"github.com/pkg/exec"
 )
 
 func ExampleCmd_Run() {
@@ -25,7 +26,7 @@ func ExampleCmd_Run_dir() {
 	}
 }
 
-func ExampleCmd_Run_dir() {
+func ExampleCmd_Run_stdout() {
 	cmd := exec.Command("git", "status")
 	// change working directory to /tmp, pass os.Stdout to the child
 	// and run git status.

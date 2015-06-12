@@ -39,7 +39,7 @@ type Cmd struct {
 // If the command fails to run or doesn't complete successfully, the
 // error is of type *ExitError. Other error types may be
 // returned for I/O problems.
-func (c *Cmd) Run(opts ...func(*exec.Cmd) error) error {
+func (c *Cmd) Run(opts ...func(*Cmd) error) error {
 	if err := c.Start(opts...); err != nil {
 		return err
 	}
@@ -50,22 +50,22 @@ func (c *Cmd) Run(opts ...func(*exec.Cmd) error) error {
 //
 // The Wait method will return the exit code and release associated resources
 // once the command exits.
-func (c *Cmd) Start(opts ...func(*exec.Cmd) error) error {
+func (c *Cmd) Start(opts ...func(*Cmd) error) error {
 	if !c.initalised {
 		return errors.New("exec: command not initalised")
 	}
-	if err := applyDefaultOptions(c.Cmd); err != nil {
+	if err := applyDefaultOptions(c); err != nil {
 		return err
 	}
-	if err := applyOptions(c.Cmd, opts...); err != nil {
+	if err := applyOptions(c, opts...); err != nil {
 		return err
 	}
 	return c.Cmd.Start()
 }
 
 // Stdin specifies the process's standard input.
-func Stdin(r io.Reader) func(*exec.Cmd) error {
-	return func(c *exec.Cmd) error {
+func Stdin(r io.Reader) func(*Cmd) error {
+	return func(c *Cmd) error {
 		if c.Stdin != nil {
 			return errors.New("exec: Stdin already set")
 		}
@@ -75,8 +75,8 @@ func Stdin(r io.Reader) func(*exec.Cmd) error {
 }
 
 // Stdout specifies the process's standard output.
-func Stdout(w io.Writer) func(*exec.Cmd) error {
-	return func(c *exec.Cmd) error {
+func Stdout(w io.Writer) func(*Cmd) error {
+	return func(c *Cmd) error {
 		if c.Stdout != nil {
 			return errors.New("exec: Stdout already set")
 		}
@@ -86,8 +86,8 @@ func Stdout(w io.Writer) func(*exec.Cmd) error {
 }
 
 // Stderr specifies the process's standard error..
-func Stderr(w io.Writer) func(*exec.Cmd) error {
-	return func(c *exec.Cmd) error {
+func Stderr(w io.Writer) func(*Cmd) error {
+	return func(c *Cmd) error {
 		if c.Stderr != nil {
 			return errors.New("exec: Stderr already set")
 		}
@@ -97,9 +97,9 @@ func Stderr(w io.Writer) func(*exec.Cmd) error {
 }
 
 // Output runs the command and returns its standard output.
-func (c *Cmd) Output(opts ...func(*exec.Cmd) error) ([]byte, error) {
+func (c *Cmd) Output(opts ...func(*Cmd) error) ([]byte, error) {
 	var b bytes.Buffer
-	opts = append([]func(*exec.Cmd) error{Stdout(&b)}, opts...)
+	opts = append([]func(*Cmd) error{Stdout(&b)}, opts...)
 	err := c.Run(opts...)
 	return b.Bytes(), err
 }
@@ -107,18 +107,18 @@ func (c *Cmd) Output(opts ...func(*exec.Cmd) error) ([]byte, error) {
 // Dir specifies the working directory of the command.
 // If Dir is empty, the command executes in the calling
 // process's current directory.
-func Dir(dir string) func(*exec.Cmd) error {
-	return func(c *exec.Cmd) error {
+func Dir(dir string) func(*Cmd) error {
+	return func(c *Cmd) error {
 		c.Dir = dir
 		return nil
 	}
 }
 
-func applyDefaultOptions(c *exec.Cmd) error {
+func applyDefaultOptions(c *Cmd) error {
 	return nil
 }
 
-func applyOptions(c *exec.Cmd, opts ...func(*exec.Cmd) error) error {
+func applyOptions(c *Cmd, opts ...func(*Cmd) error) error {
 	for _, opt := range opts {
 		if err := opt(c); err != nil {
 			return err
