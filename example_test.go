@@ -59,3 +59,12 @@ func ExampleCmd_Start() {
 		log.Fatal(err)
 	}
 }
+
+func ExampleCmd_Start_Setenv() {
+	// set or overwrite an environment variable.
+	cmd := exec.Command("go")
+	err := cmd.Start(exec.Setenv("GOPATH", "/foo"))
+	if err != nil {
+		log.Fatal(err)
+	}
+}

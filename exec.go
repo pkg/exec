@@ -5,7 +5,9 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"os"
 	"os/exec"
+	"strings"
 )
 
 // LookPath searches for an executable binary named file in the directories
@@ -96,6 +98,21 @@ func Stderr(w io.Writer) func(*Cmd) error {
 	}
 }
 
+// Setenv applies (or overwrites) childs environment key.
+func Setenv(key, val string) func(*Cmd) error {
+	return func(c *Cmd) error {
+		key += "="
+		for i := range c.Env {
+			if strings.HasPrefix(c.Env[i], key) {
+				c.Env[i] = key + val
+				return nil
+			}
+		}
+		c.Env = append(c.Env, key+val)
+		return nil
+	}
+}
+
 // Output runs the command and returns its standard output.
 func (c *Cmd) Output(opts ...func(*Cmd) error) ([]byte, error) {
 	var b bytes.Buffer
@@ -115,6 +132,7 @@ func Dir(dir string) func(*Cmd) error {
 }
 
 func applyDefaultOptions(c *Cmd) error {
+	c.Env = os.Environ()
 	return nil
 }
 
