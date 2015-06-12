@@ -39,7 +39,7 @@ func ExampleCmd_Run_stdout() {
 	}
 }
 
-func ExampleCmd_Run_before_after() {
+func ExampleCmd_Run_before() {
 	cmd := exec.Command("/usr/sleep", "60s")
 	// set a before and after function
 	err := cmd.Run(
