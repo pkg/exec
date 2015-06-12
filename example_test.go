@@ -39,6 +39,24 @@ func ExampleCmd_Run_stdout() {
 	}
 }
 
+func ExampleCmd_Run_before_after() {
+	cmd := exec.Command("/usr/sleep", "60s")
+	// set a before and after function
+	err := cmd.Run(
+		exec.BeforeFunc(func(c *exec.Cmd) error {
+			log.Println("About to call:", c.Args)
+			return nil
+		}),
+		exec.AfterFunc(func(c *exec.Cmd) error {
+			log.Println("Finised calling:", c.Args)
+			return nil
+		}),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func ExampleCmd_Output_dir() {
 	cmd := exec.Command("git", "status")
 	// change working directory to /tmp, run git status and

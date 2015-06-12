@@ -29,7 +29,9 @@ func Command(name string, args ...string) *Cmd {
 // Cmd cannot be reused after calling its Run or Start methods.
 type Cmd struct {
 	*exec.Cmd
-	initalised bool
+	initalised    bool
+	waited        bool
+	before, after func(*Cmd) error
 }
 
 // Run starts the specified command and waits for it to complete.
@@ -62,7 +64,31 @@ func (c *Cmd) Start(opts ...func(*Cmd) error) error {
 	if err := applyOptions(c, opts...); err != nil {
 		return err
 	}
+	if c.before != nil {
+		if err := c.before(c); err != nil {
+			return err
+		}
+	}
 	return c.Cmd.Start()
+}
+
+// Wait waits for the command to exit.
+// It must have been started by Start.
+func (c *Cmd) Wait() (err error) {
+	if c.waited {
+		return errors.New("exec: Wait was already called")
+	}
+	c.waited = true
+	defer func() {
+		if c.after == nil {
+			return
+		}
+		errAfter := c.after(c)
+		if err == nil {
+			err = errAfter
+		}
+	}()
+	return c.Cmd.Wait()
 }
 
 // Stdin specifies the process's standard input.
@@ -94,6 +120,30 @@ func Stderr(w io.Writer) func(*Cmd) error {
 			return errors.New("exec: Stderr already set")
 		}
 		c.Stderr = w
+		return nil
+	}
+}
+
+// BeforeFunc runs fn just prior to executing the command. If an error
+// is returned, the command will not be run.
+func BeforeFunc(fn func(*Cmd) error) func(*Cmd) error {
+	return func(c *Cmd) error {
+		if c.before != nil {
+			return errors.New("exec: BeforeFunc already set")
+		}
+		c.before = fn
+		return nil
+	}
+}
+
+// AfterFunc runs fn just after to executing the command. If an error
+// is returned, it will be returned providing the command exited cleanly.
+func AfterFunc(fn func(*Cmd) error) func(*Cmd) error {
+	return func(c *Cmd) error {
+		if c.after != nil {
+			return errors.New("exec: AfterFunc already set")
+		}
+		c.after = fn
 		return nil
 	}
 }
