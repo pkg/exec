@@ -182,7 +182,9 @@ func Dir(dir string) func(*Cmd) error {
 }
 
 func applyDefaultOptions(c *Cmd) error {
-	c.Env = os.Environ()
+	if c.Env == nil {
+		c.Env = os.Environ()
+	}
 	return nil
 }
 
