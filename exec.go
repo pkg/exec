@@ -10,6 +10,19 @@ import (
 	"strings"
 )
 
+// System executes the command specified in command by calling /bin/sh -c command, and returns after the command has been completed. Stdin, Stdout, and Stderr are plumbed through to the child, but this behaviour can be modified by opts.
+func System(command string, opts ...func(*Cmd) error) error {
+	args := strings.Fields(command)
+	args = append([]string{"-c"}, args...)
+	cmd := Command("/bin/sh", args...)
+	opts = append([]func(*Cmd) error{
+		Stdin(os.Stdin),
+		Stdout(os.Stdout),
+		Stderr(os.Stderr),
+	}, opts...)
+	return cmd.Run(opts...)
+}
+
 // LookPath searches for an executable binary named file in the directories
 // named by the PATH environment variable. If file contains a slash, it is
 // tried directly and the PATH is not consulted. The result may be an

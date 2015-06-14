@@ -101,7 +101,7 @@ func TestCatStdin(t *testing.T) {
 
 func TestCatGoodAndBadFile(t *testing.T) {
 	// Testing combined output and error values.
-	bs, err := helperCommand(t, "cat", "/bogus/file.foo", "exec_test.go").CombinedOutput()
+	bs, err := helperCommand(t, "cat", "/bogus/file.foo", "osexec_test.go").CombinedOutput()
 	if _, ok := err.(*osexec.ExitError); !ok {
 		t.Errorf("expected *exec.ExitError from cat combined; got %T: %v", err, err)
 	}
