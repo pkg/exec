@@ -48,7 +48,7 @@ func ExampleCmd_Run_before() {
 			return nil
 		}),
 		exec.AfterFunc(func(c *exec.Cmd) error {
-			log.Println("Finised calling:", c.Args)
+			log.Println("Finished calling:", c.Args)
 			return nil
 		}),
 	)
